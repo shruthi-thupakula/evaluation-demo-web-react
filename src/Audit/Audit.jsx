@@ -1,23 +1,55 @@
-import React, { useState } from "react";
-import { Form, Table } from "react-bootstrap";
+import TablePagination from "@material-ui/core/TablePagination";
+import React, { useEffect, useState } from "react";
+import { Col, Form, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import NavBar from "../Navbar";
 import { userActions } from "../_actions";
 import { prepareDate } from "../_helpers";
 import "./Audit.css";
+import FilterForm, { filterUsers } from "./FilterForm";
+// const filteredFreeData = data?.free.filter(doesTextExist(searchText));
+
 const UsersTable = ({ users, onDelete }) => {
+  const [localData, setLocalData] = useState([]);
   const [hoursFormat, setHoursFormat] = useState(12);
-  if (!users.items) {
-    return "No Users available";
-  }
+  const [page, setPage] = React.useState(1);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(1);
+  };
+
   const handleHoursFormatChange = (event) => {
     if (event && event.target && event.target.value !== hoursFormat) {
       setHoursFormat(event.target.value);
     }
   };
+
+  const handleSubmit = (data) => {
+    setLocalData(filterUsers(data, localData));
+  };
+
+  const handleSetData = () => {
+    if (users && users.items) {
+      setLocalData(users.items);
+    }
+  };
+  useEffect(() => {
+    handleSetData();
+  }, [users]);
+
+  // if (!localData.length) {
+  //   return "No Users available";
+  // }
   return (
     <>
-      <Form.Group controlId="date-format">
+      <FilterForm onSubmit={handleSubmit} onClear={handleSetData} />
+      <Form.Group as={Col}>
         <Form.Label>Date Time Format</Form.Label>
         <Form.Control
           as="select"
@@ -29,7 +61,6 @@ const UsersTable = ({ users, onDelete }) => {
           <option value={12}>12 Hours</option>
         </Form.Control>
       </Form.Group>
-
       <Table striped bordered className="user-screen">
         <thead>
           <tr>
@@ -42,28 +73,40 @@ const UsersTable = ({ users, onDelete }) => {
           </tr>
         </thead>
         <tbody>
-          {users.items.map((user, index) => (
-            <tr key={user.id}>
-              <td>{user.id}</td>
-              <td>{user.role}</td>
-              <td>{prepareDate(user.createdDate, hoursFormat)}</td>
-              <td>{user.firstName}</td>
-              <td>{user.lastName}</td>
-              <td>
-                {user.deleting ? (
-                  <em>Deleting...</em>
-                ) : user.deleteError ? (
-                  <span className="text-danger">ERROR: {user.deleteError}</span>
-                ) : (
-                  <span>
-                    <a onClick={onDelete(user.id)}>Delete</a>
-                  </span>
-                )}
-              </td>
-            </tr>
-          ))}
+          {localData
+            .slice(rowsPerPage * (page - 1), rowsPerPage * page)
+            .map((user, index) => (
+              <tr key={user.id}>
+                <td>{user.id}</td>
+                <td>{user.role}</td>
+                <td>{prepareDate(user.createdDate, hoursFormat)}</td>
+                <td>{user.firstName}</td>
+                <td>{user.lastName}</td>
+                <td>
+                  {user.deleting ? (
+                    <em>Deleting...</em>
+                  ) : user.deleteError ? (
+                    <span className="text-danger">
+                      ERROR: {user.deleteError}
+                    </span>
+                  ) : (
+                    <span>
+                      <a onClick={onDelete(user.id)}>Delete</a>
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
         </tbody>
-      </Table>
+      </Table>{" "}
+      <TablePagination
+        component="div"
+        count={localData.length}
+        page={page}
+        onChangePage={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onChangeRowsPerPage={handleChangeRowsPerPage}
+      />
     </>
   );
 };
