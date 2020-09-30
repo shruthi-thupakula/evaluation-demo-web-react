@@ -25,3 +25,10 @@ a.nav-link {
 .user-screen {
   width: max-content !important;
 }
+
+td,
+th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}

@@ -2,7 +2,51 @@ import React from "react";
 import { connect } from "react-redux";
 import NavBar from "../Navbar";
 import { userActions } from "../_actions";
-
+import "./Audit.css";
+const UsersTable = ({ users, onDelete }) => {
+  if (!users.items) {
+    return "No Users available";
+  }
+  return (
+    <table className="user-screen">
+      <thead>
+        <tr>
+          <th>User Id</th>
+          <th>Role</th>
+          <th>CreatedDate</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {users.items.map((user, index) => (
+          <tr key={user.id}>
+            <td>{user.id}</td>
+            <td>{user.role}</td>
+            <td>{user.createdDate}</td>
+            <td>{user.firstName}</td>
+            <td>{user.lastName}</td>
+            <td>
+              {user.deleting ? (
+                <em> - Deleting...</em>
+              ) : user.deleteError ? (
+                <span className="text-danger">
+                  {" "}
+                  - ERROR: {user.deleteError}
+                </span>
+              ) : (
+                <span>
+                  <a onClick={onDelete(user.id)}>Delete</a>
+                </span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 class Auditpage extends React.Component {
   componentDidMount() {
     this.props.getUsers();
@@ -25,29 +69,10 @@ class Auditpage extends React.Component {
           {users.error && (
             <span className="text-danger">ERROR: {users.error}</span>
           )}
-          {users.items && (
-            <ul className="user-screen">
-              {users.items.map((user, index) => (
-                <li key={user.id}>
-                  {user.id + " " + user.role + " " + user.createdDate + " "}
-                  {user.firstName + " " + user.lastName}
-                  {user.deleting ? (
-                    <em> - Deleting...</em>
-                  ) : user.deleteError ? (
-                    <span className="text-danger">
-                      {" "}
-                      - ERROR: {user.deleteError}
-                    </span>
-                  ) : (
-                    <span>
-                      {" "}
-                      - <a onClick={this.handleDeleteUser(user.id)}>Delete</a>
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+          <UsersTable
+            users={users}
+            onDelete={this.handleDeleteUser.bind(this)}
+          />
         </div>
       </div>
     );

@@ -10,7 +10,6 @@ const NavBarComponent = (props) => {
           <Link to="/home">Home</Link>
         </Nav.Link>
         <Nav.Link>
-          {" "}
           <Link to="/audit">Auditor</Link>
         </Nav.Link>
         <Nav.Link>
