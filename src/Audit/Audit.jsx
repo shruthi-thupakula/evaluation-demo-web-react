@@ -1,50 +1,70 @@
-import React from "react";
+import React, { useState } from "react";
+import { Form, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import NavBar from "../Navbar";
 import { userActions } from "../_actions";
+import { prepareDate } from "../_helpers";
 import "./Audit.css";
 const UsersTable = ({ users, onDelete }) => {
+  const [hoursFormat, setHoursFormat] = useState(12);
   if (!users.items) {
     return "No Users available";
   }
+  const handleHoursFormatChange = (event) => {
+    if (event && event.target && event.target.value !== hoursFormat) {
+      setHoursFormat(event.target.value);
+    }
+  };
   return (
-    <table className="user-screen">
-      <thead>
-        <tr>
-          <th>User Id</th>
-          <th>Role</th>
-          <th>CreatedDate</th>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {users.items.map((user, index) => (
-          <tr key={user.id}>
-            <td>{user.id}</td>
-            <td>{user.role}</td>
-            <td>{user.createdDate}</td>
-            <td>{user.firstName}</td>
-            <td>{user.lastName}</td>
-            <td>
-              {user.deleting ? (
-                <em> - Deleting...</em>
-              ) : user.deleteError ? (
-                <span className="text-danger">
-                  {" "}
-                  - ERROR: {user.deleteError}
-                </span>
-              ) : (
-                <span>
-                  <a onClick={onDelete(user.id)}>Delete</a>
-                </span>
-              )}
-            </td>
+    <>
+      <Form.Group controlId="date-format">
+        <Form.Label>Date Time Format</Form.Label>
+        <Form.Control
+          as="select"
+          custom
+          defaultValue={hoursFormat}
+          onChange={handleHoursFormatChange}
+        >
+          <option value={24}>24 Hours</option>
+          <option value={12}>12 Hours</option>
+        </Form.Control>
+      </Form.Group>
+
+      <Table striped bordered className="user-screen">
+        <thead>
+          <tr>
+            <th>User Id</th>
+            <th>Role</th>
+            <th>CreatedDate</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Actions</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {users.items.map((user, index) => (
+            <tr key={user.id}>
+              <td>{user.id}</td>
+              <td>{user.role}</td>
+              <td>{prepareDate(user.createdDate, hoursFormat)}</td>
+              <td>{user.firstName}</td>
+              <td>{user.lastName}</td>
+              <td>
+                {user.deleting ? (
+                  <em>Deleting...</em>
+                ) : user.deleteError ? (
+                  <span className="text-danger">ERROR: {user.deleteError}</span>
+                ) : (
+                  <span>
+                    <a onClick={onDelete(user.id)}>Delete</a>
+                  </span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </>
   );
 };
 class Auditpage extends React.Component {
