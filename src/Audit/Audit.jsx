@@ -6,13 +6,13 @@ import NavBar from "../Navbar";
 import { userActions } from "../_actions";
 import { prepareDate } from "../_helpers";
 import "./Audit.css";
-import FilterForm, { filterUsers } from "./FilterForm";
+import FilterForm, { filterUsers, getSlice } from "./FilterForm";
 // const filteredFreeData = data?.free.filter(doesTextExist(searchText));
 
 const UsersTable = ({ users, onDelete }) => {
   const [localData, setLocalData] = useState([]);
   const [hoursFormat, setHoursFormat] = useState(12);
-  const [page, setPage] = React.useState(1);
+  const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   const handleChangePage = (event, newPage) => {
@@ -32,6 +32,8 @@ const UsersTable = ({ users, onDelete }) => {
 
   const handleSubmit = (data) => {
     setLocalData(filterUsers(data, localData));
+    // on filter apply bring the user back to page 1
+    setPage(0);
   };
 
   const handleSetData = () => {
@@ -73,32 +75,28 @@ const UsersTable = ({ users, onDelete }) => {
           </tr>
         </thead>
         <tbody>
-          {localData
-            .slice(rowsPerPage * (page - 1), rowsPerPage * page)
-            .map((user, index) => (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>{user.role}</td>
-                <td>{prepareDate(user.createdDate, hoursFormat)}</td>
-                <td>{user.firstName}</td>
-                <td>{user.lastName}</td>
-                <td>
-                  {user.deleting ? (
-                    <em>Deleting...</em>
-                  ) : user.deleteError ? (
-                    <span className="text-danger">
-                      ERROR: {user.deleteError}
-                    </span>
-                  ) : (
-                    <span>
-                      <a onClick={onDelete(user.id)}>Delete</a>
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
+          {getSlice(localData, rowsPerPage, page).map((user, index) => (
+            <tr key={user.id}>
+              <td>{user.id}</td>
+              <td>{user.role}</td>
+              <td>{prepareDate(user.createdDate, hoursFormat)}</td>
+              <td>{user.firstName}</td>
+              <td>{user.lastName}</td>
+              <td>
+                {user.deleting ? (
+                  <em>Deleting...</em>
+                ) : user.deleteError ? (
+                  <span className="text-danger">ERROR: {user.deleteError}</span>
+                ) : (
+                  <span>
+                    <a onClick={onDelete(user.id)}>Delete</a>
+                  </span>
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
-      </Table>{" "}
+      </Table>
       <TablePagination
         component="div"
         count={localData.length}
@@ -124,7 +122,7 @@ class Auditpage extends React.Component {
     return (
       <div>
         <NavBar />
-        <div className="col-md-6 col-md-offset-3">
+        <div>
           <h1>Hi {user.firstName}!</h1>
           <p>You're logged in with React!!</p>
           <h3>All login audit :</h3>

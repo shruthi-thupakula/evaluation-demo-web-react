@@ -1,8 +1,18 @@
-import { isAfter, isBefore } from "date-fns";
-import React from "react";
+import { isAfter, isBefore, isWithinInterval } from "date-fns";
+import React, { useRef } from "react";
 import { Button, Col, Form } from "react-bootstrap";
 const FilterForm = (props) => {
   const { onSubmit, onClear, ...rest } = props;
+  const formRef = useRef();
+
+  const handleClear = () => {
+    if (formRef && formRef.current && formRef.current.reset) {
+      formRef.current.reset();
+      // to reset the form
+    }
+    // inform parent
+    onClear();
+  };
   const handleSubmit = (event) => {
     if (event && event.preventDefault) {
       event.preventDefault();
@@ -10,7 +20,6 @@ const FilterForm = (props) => {
     if (event && event.stopPropagation) {
       event.stopPropagation();
     }
-
     const { name = {}, role = {}, fromDate = {}, toDate = {} } =
       event.currentTarget || {};
     // since adding 3rd party libraries makes heavy
@@ -34,7 +43,7 @@ const FilterForm = (props) => {
   };
 
   return (
-    <Form {...rest} onSubmit={handleSubmit}>
+    <Form {...rest} onSubmit={handleSubmit} ref={formRef}>
       <Form.Row>
         <Form.Group as={Col}>
           <Form.Label>Name</Form.Label>
@@ -55,16 +64,20 @@ const FilterForm = (props) => {
           <Form.Label>Date From</Form.Label>
           <Form.Control
             type="datetime-local"
-            name="from"
+            name="fromDate"
             placeholder="from date"
           />
         </Form.Group>
         <Form.Group as={Col}>
           <Form.Label>Date To</Form.Label>
-          <Form.Control type="datetime-local" name="to" placeholder="to date" />
+          <Form.Control
+            type="datetime-local"
+            name="toDate"
+            placeholder="to date"
+          />
         </Form.Group>
       </Form.Row>
-      <Button variant="secondary" onClick={onClear}>
+      <Button variant="secondary" onClick={handleClear}>
         Clear Filter
       </Button>{" "}
       <Button variant="primary" type="submit">
@@ -75,6 +88,7 @@ const FilterForm = (props) => {
 };
 export default FilterForm;
 
+// filters the users based on above form criteria
 export const filterUsers = (data = {}, users) => {
   // since dates are there 3rd party library may not help
   const _length = Object.keys(data).length || 0;
@@ -92,12 +106,13 @@ export const filterUsers = (data = {}, users) => {
     if (
       data.fromDate &&
       data.toDate &&
-      isWithinRange(new Date(createdDate), {
+      isWithinInterval(new Date(createdDate), {
         start: new Date(data.fromDate),
         end: new Date(data.toDate),
       })
     ) {
-      include++;
+      // as two fields considered in one case
+      include = include + 2;
     } else if (
       data.fromDate &&
       isAfter(new Date(createdDate), new Date(data.fromDate))
@@ -113,4 +128,19 @@ export const filterUsers = (data = {}, users) => {
     // if given fields length and verification length matches then valid filter
     return Boolean(_length === include);
   });
+};
+
+//returns the appropriate pagination data
+// NOTE: These work generally comes from api but due to api unavailability, local pagination is being used
+export const getSlice = (data, rowsPerPage = 10, page = 1) => {
+  let max = 0;
+  let min = 0;
+  if (!page) {
+    max = rowsPerPage;
+  } else {
+    min = rowsPerPage * page;
+    max = min + rowsPerPage;
+  }
+
+  return data.slice(min, max);
 };
